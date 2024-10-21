@@ -54,9 +54,9 @@ sum = 24
 ```
 
 # 3、gdb调试
-gdb有以下几种调试方式
-
-## 3.1、启动调试
+gdb有以下几种调试方式等
+## 3.1、调试方式
+### 3.1.1、启动调试
 通过gdb直接启动
 ```bash
 @0rigina1 ➜ (main) $ gdb ./test
@@ -80,6 +80,17 @@ Reading symbols from ./test...
 ```
 此时就可以调试了。
 
+### 3.2.1、附加调试
+```bash
+# 查询进程pid
+ps -ef | grep process_name
+
+# gdb附加
+gdb -p PID
+```
+
+## 3.2、调试
+
 在main函数上打一个断点，用法 `break function_name`。
 如：
 ```bash
@@ -99,21 +110,72 @@ Breakpoint 1 at 0x116f: file test.c, line 13.
 执行`list`显示当前执行点附近的代码。
 ```bash
 (gdb) list
-1       #include<stdio.h>
-2
-3
-4       int sum(int a, int b) {
-5           a += 1;
-6           a += 2;
-7           a += b;
 8
 9           return a + b;
 10      }
-(gdb)
+11
+12
+13      int main() {
+14          int c = 0;
+15          c = sum(3, 9);
+16
+17          printf("sum = %d", c);
 ```
 
+使用`step`或`next`来逐步执行代码。
+- `step`或简写`s`进入函数
+- `next`或简写`n`执行下一行。
+- `continue`或简写`c`继续程序执行直到下一个断点或程序结束。
+- `print variable_name`获取变量当前值
 
+单步执行一行，此时将0赋值给c。
+```bash
+(gdb) next
+14          int c = 0;
+```
 
-## 3.2、附加调试
+获取变量c的值，c此时为0
+```bash
+(gdb) print c
+$1 = 0
+```
 
-## 3.3、核心转储调试
+step单步进入sum函数，
+```bash
+(gdb) step
+15          c = sum(3, 9);
+(gdb) step
+sum (a=21845, b=1431654848) at test.c:4
+4       int sum(int a, int b) {
+(gdb) step
+5           a += 1;
+```
+
+此时a传参为3，此行第五行执行`a += 1`，单步next后，打印a的值为4。
+```bash
+(gdb) s
+sum (a=21845, b=1431654848) at test.c:4
+4       int sum(int a, int b) {
+(gdb) s
+5           a += 1;
+(gdb) n
+6           a += 2;
+(gdb) print a
+$1 = 4
+```
+
+修改变量值
+```bash
+(gdb) set var a = 100
+(gdb) print a
+$2 = 100
+```
+
+结果
+```bash
+(gdb) n
+__libc_start_main (main=0x55555555516f <main>, argc=1, argv=0x7fffffffd168, init=<optimized out>, fini=<optimized out>, rtld_fini=<optimized out>, stack_end=0x7fffffffd158) at ../csu/libc-start.c:342
+342     ../csu/libc-start.c: No such file or directory.
+(gdb) n
+sum = 120
+```
